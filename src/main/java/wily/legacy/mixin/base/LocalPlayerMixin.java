@@ -56,6 +56,8 @@ public abstract class LocalPlayerMixin extends AbstractClientPlayer {
 
     @Shadow public abstract void move(MoverType arg, Vec3 arg2);
 
+    @Shadow protected int sprintTriggerTime;
+
     public LocalPlayerMixin(ClientLevel clientLevel, GameProfile gameProfile) {
         super(clientLevel, gameProfile);
     }
@@ -84,6 +86,12 @@ public abstract class LocalPlayerMixin extends AbstractClientPlayer {
     public boolean aiStepSprinting(boolean original) {
         return false;
     }
+
+    @WrapWithCondition(method = "aiStep", at = @At(value = "FIELD", target = "Lnet/minecraft/client/player/LocalPlayer;sprintTriggerTime:I", opcode = Opcodes.PUTFIELD, ordinal = /*? if <1.21.5 {*/3/*?} else {*//*2*//*?}*/))
+    public boolean aiStepCanDoubleTapSprint(LocalPlayer player, int value) {
+        return !controllerManager.isInSprintDeadZone();
+    }
+
     //? if <1.21.5 {
     @WrapWithCondition(method = "aiStep", at = @At(value = "INVOKE",target = "Lnet/minecraft/client/player/LocalPlayer;setSprinting(Z)V", ordinal = /*? if <1.21.4 {*/3/*?} else {*//*4*//*?}*/))
     public boolean aiStepSprintingWater(LocalPlayer instance, boolean b) {
@@ -91,20 +99,16 @@ public abstract class LocalPlayerMixin extends AbstractClientPlayer {
     }
     @Inject(method = "aiStep", at = @At(value = "FIELD", target = "Lnet/minecraft/client/player/LocalPlayer;horizontalCollision:Z", ordinal = 0, shift = At.Shift.AFTER))
     public void aiStepStopSprinting(CallbackInfo ci, @Local(ordinal = 0) LocalBooleanRef localRef) {
-        localRef.set(localRef.get() || controllerManager.isInSprintDeadzone());
+        localRef.set(localRef.get() || (controllerManager.isInSprintDeadZone() && sprintTriggerTime <= 0));
     }
     //?} else {
     /*@ModifyExpressionValue(method = {"shouldStopRunSprinting", "canStartSprinting"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;isUnderWater()Z"))
     public boolean shouldStopRunSprinting(boolean original) {
         return (Legacy4JClient.hasModOnServer() && gameRules.getRule(LegacyGameRules.LEGACY_SWIMMING).get() && isInWater()) || original;
     }
-    @Inject(method = "canStartSprinting", at = @At(value = "RETURN"), cancellable = true)
-    public void canStartSprinting(CallbackInfoReturnable<Boolean> cir) {
-        cir.setReturnValue(cir.getReturnValue() && !controllerManager.isInSprintDeadzone());
-    }
     @Inject(method = "shouldStopRunSprinting", at = @At(value = "RETURN"), cancellable = true)
     public void shouldStopSprinting(CallbackInfoReturnable<Boolean> cir) {
-        cir.setReturnValue(cir.getReturnValue() && controllerManager.isInSprintDeadzone());
+        cir.setReturnValue(cir.getReturnValue() || (controllerManager.isInSprintDeadZone() && sprintTriggerTime <= 0));
     }
     *///?}
 

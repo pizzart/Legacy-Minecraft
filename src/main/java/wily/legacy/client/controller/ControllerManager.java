@@ -386,11 +386,11 @@ public class ControllerManager {
         }
     }
 
-    public boolean isInSprintDeadzone() {
-        return isInSprintDeadzone(ControllerBinding.LEFT_STICK) && isControllerTheLastInput();
+    public boolean isInSprintDeadZone() {
+        return isInSprintDeadZone(ControllerBinding.LEFT_STICK) && isControllerTheLastInput();
     }
 
-    public boolean isInSprintDeadzone(ControllerBinding<BindingState.Axis> stick) {
+    public boolean isInSprintDeadZone(ControllerBinding<BindingState.Axis> stick) {
         return getButtonState(stick).getSmoothY() > -0.6;
     }
 
