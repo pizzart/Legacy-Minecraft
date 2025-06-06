@@ -2,6 +2,8 @@ package wily.legacy.mixin.base;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
+import com.llamalad7.mixinextras.sugar.Local;
+import com.llamalad7.mixinextras.sugar.ref.LocalBooleanRef;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -25,6 +27,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import wily.factoryapi.FactoryAPIClient;
 import wily.legacy.Legacy4J;
 import wily.legacy.Legacy4JClient;
@@ -86,10 +89,22 @@ public abstract class LocalPlayerMixin extends AbstractClientPlayer {
     public boolean aiStepSprintingWater(LocalPlayer instance, boolean b) {
         return !Legacy4JClient.hasModOnServer() || !gameRules.getRule(LegacyGameRules.LEGACY_SWIMMING).get() || !this.input.hasForwardImpulse() || !this.hasEnoughFoodToStartSprinting();
     }
+    @Inject(method = "aiStep", at = @At(value = "FIELD", target = "Lnet/minecraft/client/player/LocalPlayer;horizontalCollision:Z", ordinal = 0, shift = At.Shift.AFTER))
+    public void aiStepStopSprinting(CallbackInfo ci, @Local(ordinal = 0) LocalBooleanRef localRef) {
+        localRef.set(localRef.get() || controllerManager.isInSprintDeadzone());
+    }
     //?} else {
     /*@ModifyExpressionValue(method = {"shouldStopRunSprinting", "canStartSprinting"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;isUnderWater()Z"))
     public boolean shouldStopRunSprinting(boolean original) {
         return (Legacy4JClient.hasModOnServer() && gameRules.getRule(LegacyGameRules.LEGACY_SWIMMING).get() && isInWater()) || original;
+    }
+    @Inject(method = "canStartSprinting", at = @At(value = "RETURN"), cancellable = true)
+    public void canStartSprinting(CallbackInfoReturnable<Boolean> cir) {
+        cir.setReturnValue(cir.getReturnValue() && !controllerManager.isInSprintDeadzone());
+    }
+    @Inject(method = "shouldStopRunSprinting", at = @At(value = "RETURN"), cancellable = true)
+    public void shouldStopSprinting(CallbackInfoReturnable<Boolean> cir) {
+        cir.setReturnValue(cir.getReturnValue() && controllerManager.isInSprintDeadzone());
     }
     *///?}
 

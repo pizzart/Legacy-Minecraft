@@ -350,6 +350,14 @@ public class ControllerManager {
         }
     }
 
+    public boolean isInSprintDeadzone() {
+        return isInSprintDeadzone(ControllerBinding.LEFT_STICK) && isControllerTheLastInput();
+    }
+
+    public boolean isInSprintDeadzone(ControllerBinding<BindingState.Axis> stick) {
+        return getButtonState(stick).getSmoothY() > -0.6;
+    }
+
     interface Setup extends Consumer<ControllerManager> {
         FactoryEvent<Setup> EVENT = new FactoryEvent<>(e-> m-> e.invokeAll(l->l.accept(m)));
     }

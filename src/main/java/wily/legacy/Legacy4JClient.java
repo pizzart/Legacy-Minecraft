@@ -351,10 +351,6 @@ public class Legacy4JClient {
                 }
             }
         }
-        if (minecraft.player != null) {
-            if (minecraft.player.isSprinting() && controllerManager.getButtonState(ControllerBinding.LEFT_STICK).getSmoothY() > -0.6 && controllerManager.isControllerTheLastInput())
-                minecraft.player.setSprinting(false);
-        }
 
         if (!Minecraft.getInstance().isPaused()) {
             TopMessage.tick();
