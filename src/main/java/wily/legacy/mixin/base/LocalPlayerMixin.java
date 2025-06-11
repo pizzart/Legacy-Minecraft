@@ -87,8 +87,8 @@ public abstract class LocalPlayerMixin extends AbstractClientPlayer {
         return false;
     }
 
-    @WrapWithCondition(method = "aiStep", at = @At(value = "FIELD", target = "Lnet/minecraft/client/player/LocalPlayer;sprintTriggerTime:I", opcode = Opcodes.PUTFIELD, ordinal = /*? if <1.21.5 {*/3/*?} else {*//*2*//*?}*/))
-    public boolean aiStepCanDoubleTapSprint(LocalPlayer player, int value) {
+    @WrapWithCondition(method = "aiStep", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;setSprinting(Z)V", ordinal = 0))
+    public boolean aiStepCanDoubleTapSprint(LocalPlayer player, boolean value) {
         return !controllerManager.isInSprintDeadZone();
     }
 
