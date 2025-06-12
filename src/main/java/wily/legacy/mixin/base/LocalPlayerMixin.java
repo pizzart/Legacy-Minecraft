@@ -2,8 +2,6 @@ package wily.legacy.mixin.base;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
-import com.llamalad7.mixinextras.sugar.Local;
-import com.llamalad7.mixinextras.sugar.ref.LocalBooleanRef;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -27,7 +25,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import wily.factoryapi.FactoryAPIClient;
 import wily.legacy.Legacy4J;
 import wily.legacy.Legacy4JClient;
@@ -55,8 +52,6 @@ public abstract class LocalPlayerMixin extends AbstractClientPlayer {
     //?}
 
     @Shadow public abstract void move(MoverType arg, Vec3 arg2);
-
-    @Shadow protected int sprintTriggerTime;
 
     public LocalPlayerMixin(ClientLevel clientLevel, GameProfile gameProfile) {
         super(clientLevel, gameProfile);
@@ -86,29 +81,19 @@ public abstract class LocalPlayerMixin extends AbstractClientPlayer {
     public boolean aiStepSprinting(boolean original) {
         return false;
     }
-
     @WrapWithCondition(method = "aiStep", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;setSprinting(Z)V", ordinal = 0))
-    public boolean aiStepCanDoubleTapSprint(LocalPlayer player, boolean value) {
-        return !controllerManager.isInSprintDeadZone();
+    public boolean aiStepSprintController(LocalPlayer instance, boolean b) {
+        return !controllerManager.isControllerTheLastInput();
     }
-
     //? if <1.21.5 {
     @WrapWithCondition(method = "aiStep", at = @At(value = "INVOKE",target = "Lnet/minecraft/client/player/LocalPlayer;setSprinting(Z)V", ordinal = /*? if <1.21.4 {*/3/*?} else {*//*4*//*?}*/))
     public boolean aiStepSprintingWater(LocalPlayer instance, boolean b) {
         return !Legacy4JClient.hasModOnServer() || !gameRules.getRule(LegacyGameRules.LEGACY_SWIMMING).get() || !this.input.hasForwardImpulse() || !this.hasEnoughFoodToStartSprinting();
     }
-    @Inject(method = "aiStep", at = @At(value = "FIELD", target = "Lnet/minecraft/client/player/LocalPlayer;horizontalCollision:Z", ordinal = 0, shift = At.Shift.AFTER))
-    public void aiStepStopSprinting(CallbackInfo ci, @Local(ordinal = 0) LocalBooleanRef localRef) {
-        localRef.set(localRef.get() || (controllerManager.isInSprintDeadZone() && sprintTriggerTime <= 0));
-    }
     //?} else {
     /*@ModifyExpressionValue(method = {"shouldStopRunSprinting", "canStartSprinting"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;isUnderWater()Z"))
     public boolean shouldStopRunSprinting(boolean original) {
         return (Legacy4JClient.hasModOnServer() && gameRules.getRule(LegacyGameRules.LEGACY_SWIMMING).get() && isInWater()) || original;
-    }
-    @Inject(method = "shouldStopRunSprinting", at = @At(value = "RETURN"), cancellable = true)
-    public void shouldStopSprinting(CallbackInfoReturnable<Boolean> cir) {
-        cir.setReturnValue(cir.getReturnValue() || (controllerManager.isInSprintDeadZone() && sprintTriggerTime <= 0));
     }
     *///?}
 
