@@ -336,7 +336,6 @@ public class OptionsScreen extends PanelVListScreen {
                                 FactoryConfig::get,
                                 LegacyOptions.legacyItemTooltipScaling),
                         o->o.renderableVList.addOptions(
-                                LegacyOptions.limitCursor,
                                 LegacyOptions.inGameTooltips,
                                 LegacyOptions.animatedCharacter,
                                 LegacyOptions.smoothAnimatedCharacter,
